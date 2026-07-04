@@ -3,9 +3,11 @@ services:
     name: mmiw-panic
     runtime: python
     plan: free
-    buildCommand: "pip install -r mmiw_site/requirements.txt"
+    buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn mmiw_site.main:app --host 0.0.0.0 --port $PORT"
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
       - key: PANIC_REDIRECT
         value: https://www.weather.com
       - key: PANIC_RATE_LIMIT
@@ -26,3 +28,4 @@ services:
         value: /opt/render/project/src/mmiw.db
       - key: MMIW_UPLOAD_DIR
         value: /opt/render/project/src/uploads
+
