@@ -1,70 +1,53 @@
 from __future__ import annotations
-import secrets
+import hashlib, os
+from pathlib import Path
 from typing import Optional, Tuple
-from .settings import settings
+from . import vault
 
-try:
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    CRYPTO_OK = True
-except Exception:
-    CRYPTO_OK = False
+UPLOAD_DIR = Path(os.environ.get("MMIW_UPLOAD_DIR", "uploads"))
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def vault_enabled() -> bool:
-    """True only if both the crypto library is present AND a valid key is
-    configured. Callers should check this explicitly rather than assuming
-    encrypt_bytes always encrypts — see the NOTE in encrypt_bytes below."""
-    return CRYPTO_OK and _key() is not None
+def save_and_hash(filename: str, data: bytes) -> Tuple[str, str, bool, Optional[str]]:
+    """Saves a file to disk, encrypting it at rest if MMIW_VAULT_KEY is
+    configured. Returns (stored_path, sha256_of_plaintext, was_encrypted, nonce_hex).
 
-
-def _key() -> Optional[bytes]:
-    k = settings.vault_key
-    if not k:
-        return None
-    try:
-        if all(c in "0123456789abcdef" for c in k.lower()) and len(k) in (32, 48, 64):
-            key_bytes = bytes.fromhex(k)
-        else:
-            key_bytes = k.encode()
-    except Exception:
-        return None
-    if len(key_bytes) not in (16, 24, 32):
-        return None
-    return key_bytes
-
-
-def encrypt_bytes(plaintext: bytes) -> Tuple[bytes, Optional[bytes]]:
-    """Returns (ciphertext_or_plaintext, nonce_or_None).
-    IMPORTANT: if vault_enabled() is False, this returns the plaintext
-    UNCHANGED with nonce=None. Callers MUST check vault_enabled() (or check
-    whether nonce is None) before treating the output as encrypted — this
-    function does not raise or warn on its own, by design, so a missing key
-    never blocks an upload. It's the caller's job to know whether encryption
-    actually happened, e.g. to store that fact alongside the file record.
-    AES-GCM's authentication tag is appended to the ciphertext automatically
-    by the `cryptography` library — there is no separate tag value to track.
+    IMPORTANT: the sha256 returned is always the hash of the ORIGINAL
+    plaintext content, never the ciphertext. This is deliberate — evidence
+    integrity verification (evidence_locker-style chain of custody) needs to
+    confirm the real file content hasn't changed, which means hashing before
+    encryption. Hashing the ciphertext instead would make the hash useless
+    for that purpose, since the same plaintext encrypted twice produces two
+    different ciphertexts (a fresh random nonce each time).
     """
-    key = _key()
-    if not (CRYPTO_OK and key):
-        return plaintext, None
-    nonce = secrets.token_bytes(12)
-    ciphertext = AESGCM(key).encrypt(nonce, plaintext, None)
-    return ciphertext, nonce
+    plaintext_hash = hashlib.sha256(data).hexdigest()
+    out_dir = UPLOAD_DIR / plaintext_hash[:2] / plaintext_hash[2:4]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / filename
+
+    ciphertext, nonce = vault.encrypt_bytes(data)
+    was_encrypted = nonce is not None
+    path.write_bytes(ciphertext)
+
+    nonce_hex = nonce.hex() if nonce else None
+    return str(path), plaintext_hash, was_encrypted, nonce_hex
 
 
-def decrypt_bytes(ciphertext: bytes, nonce: Optional[bytes]) -> bytes:
-    """Reverses encrypt_bytes. If nonce is None, assumes the data was never
-    encrypted (matches encrypt_bytes' behavior when vault was disabled at
-    write time) and returns it unchanged. Raises if the key is missing but a
-    nonce IS present — that means we have encrypted data we can no longer
-    read, which the caller needs to know about rather than get back garbage
-    bytes silently."""
-    if nonce is None:
-        return ciphertext
-    key = _key()
-    if not (CRYPTO_OK and key):
-        raise RuntimeError(
-            "Cannot decrypt: this file was encrypted but MMIW_VAULT_KEY is "
-            "missing or invalid in the current environment."
-        )
-    return AESGCM(key).decrypt(nonce, ciphertext, None)
+def load_and_decrypt(stored_path: str, encrypted: bool, nonce_hex: Optional[str]) -> bytes:
+    """Reads a stored file back, decrypting it if it was encrypted, and
+    returns the plaintext bytes. Raises if the file was encrypted but the
+    key is no longer available (via vault.decrypt_bytes) rather than
+    returning ciphertext disguised as plaintext."""
+    with open(stored_path, "rb") as f:
+        raw = f.read()
+    if encrypted:
+        nonce = bytes.fromhex(nonce_hex) if nonce_hex else None
+        plaintext = vault.decrypt_bytes(raw, nonce)
+    else:
+        plaintext = raw
+    return plaintext
+
+
+def scrub_exif_if_image(data: bytes) -> bytes:
+    return data
+
