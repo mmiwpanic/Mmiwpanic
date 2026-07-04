@@ -1,0 +1,19 @@
+# Never commit real secrets
+.env
+*.db
+audit.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Uploaded evidence files (these are user data, not code)
+uploads/*
+!uploads/.gitkeep
+
+# OS/editor noise
+.DS_Store
+.vscode/
