@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MMIW — Red Signal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+  :root{
+    --void: #0B0703;
+    --panel: #170D08;
+    --rust: #B8722E;
+    --rust-dark: #7A4A22;
+    --alert: #C0392B;
+    --alert-bright: #E14B3A;
+    --oxblood: #5A1E16;
+    --oxblood-line: #7A2E22;
+    --gold: #E8C88A;
+    --paper: #F5EFE0;
+    --paper-dim: #C9BFA9;
+    --focus: #F2A65A;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--paper);
+    font-family:'Source Sans 3', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3, .display{
+    font-family:'Oswald', system-ui, sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    margin:0;
+  }
+
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  :focus-visible{
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Textured rust panel background ---------- */
+  .rust-panel{
+    position:relative;
+    background:
+      radial-gradient(ellipse 90% 60% at 15% -10%, rgba(225,75,58,0.28), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 95% 10%, rgba(90,30,22,0.5), transparent 55%),
+      repeating-conic-gradient(from 0deg at 20% 30%, rgba(0,0,0,0.12) 0deg 8deg, transparent 8deg 20deg),
+      repeating-conic-gradient(from 45deg at 75% 65%, rgba(0,0,0,0.1) 0deg 6deg, transparent 6deg 18deg),
+      linear-gradient(180deg, #7a4a22 0%, #5c3419 40%, #341c0d 78%, #170d07 100%);
+    background-blend-mode: normal, normal, multiply, multiply, normal;
+    overflow:hidden;
+  }
+  .rust-panel::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(circle at 12% 22%, rgba(0,0,0,0.55) 0, transparent 2.5%),
+      radial-gradient(circle at 78% 12%, rgba(0,0,0,0.5) 0, transparent 3%),
+      radial-gradient(circle at 55% 65%, rgba(0,0,0,0.5) 0, transparent 4%),
+      radial-gradient(circle at 25% 82%, rgba(0,0,0,0.45) 0, transparent 3%),
+      radial-gradient(circle at 92% 55%, rgba(0,0,0,0.4) 0, transparent 2.5%),
+      radial-gradient(circle at 40% 40%, rgba(0,0,0,0.35) 0, transparent 2%),
+      radial-gradient(circle at 8% 60%, rgba(0,0,0,0.4) 0, transparent 3%);
+    mix-blend-mode:multiply;
+    pointer-events:none;
+  }
+  .rust-panel::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(
+      93deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 3px
+    );
+    opacity:0.5;
+    pointer-events:none;
+  }
+  .rust-panel > *{ position:relative; z-index:1; }
+
+  /* ---------- Skip link ---------- */
+  .skip-link{
+    position:absolute; left:-999px; top:0;
+    background:var(--alert); color:var(--paper);
+    padding:12px 20px; z-index:200; border-radius:0 0 6px 0;
+  }
+  .skip-link:focus{ left:0; }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 24px;
+    background: linear-gradient(180deg, #140b06, rgba(20,11,6,0));
+    position:sticky; top:0; z-index:50;
+    border-bottom:1px solid rgba(184,114,46,0.25);
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{ width:34px; height:34px; flex:none; }
+  .brand-text{
+    font-size:1.15rem; font-weight:700; color:var(--gold);
+    letter-spacing:0.08em;
+  }
+  .brand-sub{
+    display:block; font-family:'Source Sans 3',sans-serif;
+    text-transform:none; letter-spacing:normal;
+    font-size:0.68rem; color:var(--paper-dim); margin-top:2px;
+  }
+  .elder-toggle{
+    background:transparent; border:1px solid var(--rust);
+    color:var(--paper); padding:8px 14px; border-radius:999px;
+    font-size:0.82rem; cursor:pointer; display:flex; gap:8px; align-items:center;
+    transition: border-color .15s, background .15s;
+  }
+  .elder-toggle:hover{ border-color:var(--focus); background:rgba(232,200,138,0.08); }
+  .elder-toggle .dot{
+    width:8px; height:8px; border-radius:50%; background:var(--paper-dim);
+    transition: background .15s;
+  }
+  .elder-toggle[data-on="true"] .dot{ background:var(--alert-bright); box-shadow:0 0 8px var(--alert-bright); }
+
+  .account-pill{
+    background:transparent; border:1px solid var(--oxblood-line);
+    color:var(--paper-dim); padding:8px 14px; border-radius:999px;
+    font-size:0.8rem; cursor:pointer; display:flex; gap:8px; align-items:center;
+    transition: border-color .15s, color .15s;
+  }
+  .account-pill:hover{ border-color:var(--rust); color:var(--paper); }
+  .account-pill .dot{ width:8px; height:8px; border-radius:50%; background:var(--paper-dim); }
+  .account-pill[data-signed-in="true"] .dot{ background:#5fbf6a; box-shadow:0 0 8px #5fbf6a; }
+  .header-right{ display:flex; align-items:center; gap:10px; }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding: 64px 24px 40px;
+    max-width: 920px; margin: 0 auto;
+    text-align:center;
+  }
+  .hero-mark{ width:96px; height:96px; margin:0 auto 22px; display:block; }
+  .hero h1{
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+    color: var(--gold);
+    line-height:1.05;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+  .hero .accent{ color: var(--alert-bright); }
+  .hero p.lede{
+    margin: 20px auto 0; max-width: 60ch;
+    color: var(--paper-dim); font-size: 1.05rem; line-height:1.6;
+  }
+  blockquote.manifesto{
+    margin: 30px auto 0; max-width: 56ch;
+    font-family:'Oswald', sans-serif; font-weight:500;
+    font-size: 1.05rem; letter-spacing:0.01em; line-height:1.5;
+    color: var(--paper); font-style:normal;
+    border-left: 3px solid var(--alert);
+    padding: 6px 0 6px 20px; text-align:left;
+    background: rgba(0,0,0,0.18);
+    border-radius: 0 8px 8px 0;
+  }
+  blockquote.manifesto p{ margin:0; }
+  blockquote.manifesto cite{
+    display:block; margin-top:10px; font-family:'Source Sans 3',sans-serif;
+    font-size:0.78rem; color:var(--rust); font-style:normal; letter-spacing:0.06em;
+    text-transform:uppercase;
+  }
+
+  /* ---------- Panic button: fixed, always reachable, unmistakable ---------- */
+  .panic-dock{
+    position: fixed; left:0; right:0; bottom:0; z-index:100;
+    display:flex; justify-content:center;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(0deg, rgba(11,7,3,0.95) 40%, rgba(11,7,3,0));
+    pointer-events:none;
+  }
+  .panic-btn{
+    pointer-events:auto;
+    display:flex; align-items:center; gap:12px;
+    background: var(--alert);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 30px;
+    font-family:'Oswald', sans-serif;
+    font-size: 1.05rem; font-weight:700; letter-spacing:0.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+    box-shadow: 0 10px 30px rgba(192,57,43,0.5), 0 0 0 3px rgba(255,255,255,0.06) inset;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    min-height:56px;
+  }
+  .panic-btn:hover{ background: var(--alert-bright); transform: translateY(-2px); }
+  .panic-btn:active{ transform: translateY(0px) scale(0.98); }
+  .panic-btn .ring{
+    width:14px; height:14px; border-radius:50%;
+    background:#fff; flex:none;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(255,255,255,0.55); }
+    50%{ box-shadow:0 0 0 8px rgba(255,255,255,0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .panic-btn .ring{ animation:none; }
+  }
+
+  /* ---------- Sections / cards ---------- */
+  main{ padding-bottom: 140px; }
+  .section{
+    max-width: 920px; margin: 0 auto; padding: 28px 24px;
+  }
+  .section-label{
+    font-size:0.75rem; letter-spacing:0.16em; text-transform:uppercase;
+    color: var(--rust); margin-bottom:14px; display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after{
+    content:""; flex:1; height:1px; background:linear-gradient(90deg, var(--oxblood-line), transparent);
+  }
+
+  .action-grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+    gap:18px;
+  }
+  .action-card{
+    display:block; text-decoration:none; color:inherit;
+    border-radius:14px; padding: 22px;
+    background: linear-gradient(160deg, #241207, #150b06);
+    border:1px solid var(--oxblood-line);
+    cursor:pointer; text-align:left;
+    transition: border-color .15s, transform .15s;
+    font: inherit;
+  }
+  .action-card:hover{ border-color: var(--rust); transform: translateY(-3px); }
+  .action-card .icon{ font-size:1.6rem; display:block; margin-bottom:10px; }
+  .action-card h3{ font-size:1.05rem; color: var(--gold); margin-bottom:6px; }
+  .action-card p{ margin:0; font-size:0.9rem; color: var(--paper-dim); line-height:1.5; }
+
+  .alert-card{
+    border-radius:14px; padding:22px 24px;
+    background: linear-gradient(160deg, rgba(90,30,22,0.55), rgba(23,13,8,0.9));
+    border:1px solid var(--alert);
+    box-shadow: 0 0 0 1px rgba(192,57,43,0.15) inset;
+  }
+  .alert-card .status-row{
+    display:flex; align-items:center; gap:10px; margin-bottom:10px;
+    font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--alert-bright);
+  }
+  .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--alert-bright); box-shadow:0 0 8px var(--alert-bright); }
+  .alert-card h3{ color:var(--paper); font-size:1.2rem; margin-bottom:6px; }
+  .alert-card p{ margin:4px 0; color:var(--paper-dim); font-size:0.92rem; }
+  .alert-card .empty{ color:var(--paper-dim); font-style:italic; font-size:0.92rem; }
+
+  footer{
+    text-align:center; padding: 30px 24px 160px;
+    color: var(--paper-dim); font-size:0.78rem;
+    letter-spacing:0.02em;
+  }
+  footer .div-line{
+    width:60px; height:1px; background:var(--oxblood-line); margin:0 auto 16px;
+  }
+
+  /* ---------- Elder mode: larger everything ---------- */
+  body.elder{ font-size:1.15rem; }
+  body.elder .hero h1{ font-size: clamp(2.6rem, 7vw, 4.2rem); }
+  body.elder .panic-btn{ font-size:1.25rem; padding:20px 36px; }
+  body.elder .action-card h3{ font-size:1.2rem; }
+  body.elder .action-card p{ font-size:1rem; }
+
+  /* ---------- Modal (panic confirm / forms) ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(5,3,1,0.82);
+    display:none; align-items:center; justify-content:center;
+    z-index:300; padding:20px;
+  }
+  .modal-backdrop.open{ display:flex; }
+  .modal{
+    background: var(--panel);
+    border:1px solid var(--oxblood-line);
+    border-radius:16px; padding:28px;
+    max-width:440px; width:100%;
+    text-align:center;
+  }
+  .modal .modal-mark{ width:56px; height:56px; margin:0 auto 16px; }
+  .modal h2{ color:var(--gold); font-size:1.3rem; margin-bottom:10px; }
+  .modal p{ color:var(--paper-dim); font-size:0.95rem; line-height:1.55; margin-bottom:20px; }
+  .modal .modal-actions{ display:flex; gap:10px; flex-direction:column; }
+  .btn-solid{
+    background:var(--alert); color:#fff; border:none; border-radius:10px;
+    padding:14px; font-weight:600; cursor:pointer; font-size:1rem;
+  }
+  .btn-solid:hover{ background:var(--alert-bright); }
+  .btn-ghost{
+    background:transparent; color:var(--paper-dim); border:1px solid var(--oxblood-line);
+    border-radius:10px; padding:14px; cursor:pointer; font-size:1rem;
+  }
+  .btn-ghost:hover{ border-color:var(--rust); color:var(--paper); }
+
+  .countdown-num{
+    font-family:'Oswald',sans-serif; font-size:3rem; color:var(--alert-bright);
+    margin:8px 0;
+  }
+
+  /* ---------- Form elements inside modals ---------- */
+  .modal{ text-align:left; max-height:88vh; overflow-y:auto; }
+  .modal.centered{ text-align:center; }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:0.82rem; color:var(--paper-dim);
+    margin-bottom:6px; letter-spacing:0.02em;
+  }
+  .field input[type="text"],
+  .field input[type="email"],
+  .field input[type="tel"],
+  .field input[type="number"],
+  .field textarea,
+  .field select{
+    width:100%; background:rgba(0,0,0,0.35); border:1px solid var(--oxblood-line);
+    border-radius:8px; padding:11px 12px; color:var(--paper); font-size:0.95rem;
+    font-family:inherit;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{
+    border-color:var(--focus);
+  }
+  .field textarea{ resize:vertical; min-height:70px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row > .field{ flex:1; }
+  .checkbox-field{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .checkbox-field input{ width:18px; height:18px; }
+  .checkbox-field label{ color:var(--paper); font-size:0.92rem; margin:0; }
+  .hint{ font-size:0.78rem; color:var(--paper-dim); margin-top:-10px; margin-bottom:16px; }
+  .form-error{
+    background:rgba(192,57,43,0.15); border:1px solid var(--alert);
+    color:#ffb3a8; padding:10px 12px; border-radius:8px; font-size:0.85rem;
+    margin-bottom:14px; display:none;
+  }
+  .form-error.show{ display:block; }
+  .form-success{
+    background:rgba(95,191,106,0.12); border:1px solid #5fbf6a;
+    color:#bfe8c4; padding:10px 12px; border-radius:8px; font-size:0.85rem;
+    margin-bottom:14px; display:none;
+  }
+  .form-success.show{ display:block; }
+  .contact-list{ margin-bottom:16px; }
+  .contact-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 12px; background:rgba(0,0,0,0.25); border-radius:8px;
+    margin-bottom:8px; font-size:0.88rem;
+  }
+  .contact-row .meta{ color:var(--paper-dim); font-size:0.78rem; }
+  .contact-row button{
+    background:none; border:none; color:var(--alert-bright); cursor:pointer;
+    font-size:0.8rem; text-decoration:underline;
+  }
+  .case-item{
+    padding:14px; background:rgba(0,0,0,0.25); border-radius:10px;
+    margin-bottom:10px; border:1px solid var(--oxblood-line);
+  }
+  .case-item h4{ margin:0 0 4px; color:var(--gold); font-size:1rem; }
+  .case-item p{ margin:2px 0; color:var(--paper-dim); font-size:0.85rem; }
+  .modal-scroll-body{ max-height:50vh; overflow-y:auto; margin-bottom:10px; }
+  .key-display{
+    background:rgba(0,0,0,0.4); border:1px dashed var(--rust);
+    border-radius:8px; padding:12px; font-family:monospace; font-size:0.82rem;
+    word-break:break-all; color:var(--gold); margin-bottom:12px; user-select:all;
+  }
+
+  @media (max-width:480px){
+    .hero{ padding-top:44px; }
+    .panic-btn{ width:100%; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<header>
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <polygon points="50,4 78,18 90,46 78,74 50,88 22,74 10,46 22,18" fill="none" stroke="#E8C88A" stroke-width="4"/>
+      <path d="M50 26c-8 0-13 6-13 13v8l-9 9c-2 2-1 5 2 5h40c3 0 4-3 2-5l-9-9v-8c0-7-5-13-13-13z" fill="#C0392B"/>
+      <circle cx="50" cy="66" r="5" fill="#C0392B"/>
+    </svg>
+    <div>
+      <span class="brand-text">RED SIGNAL</span>
+      <span class="brand-sub">an MMIW safety &amp; case network</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="account-pill" id="accountPill" data-signed-in="false">
+      <span class="dot"></span>
+      <span id="accountLabel">Set up account</span>
+    </button>
+    <button class="elder-toggle" id="elderToggle" data-on="false" aria-pressed="false">
+      <span class="dot"></span>
+      <span id="elderLabel">Larger text</span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero rust-panel" style="border-radius:0 0 28px 28px; padding-bottom:56px;">
+    <svg class="hero-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <polygon points="50,4 78,18 90,46 78,74 50,88 22,74 10,46 22,18" fill="none" stroke="#E8C88A" stroke-width="3"/>
+      <path d="M50 26c-8 0-13 6-13 13v8l-9 9c-2 2-1 5 2 5h40c3 0 4-3 2-5l-9-9v-8c0-7-5-13-13-13z" fill="#C0392B"/>
+      <circle cx="50" cy="66" r="5" fill="#C0392B"/>
+    </svg>
+    <h1>Find our <span class="accent">loved ones.</span><br>Protect who's still here.</h1>
+    <p class="lede">A network for reporting the missing, sharing what you know safely, and reaching help fast when something feels wrong.</p>
+    <blockquote class="manifesto">
+      <p>"Every hour a family waits is an hour too long. This exists because our people don't wait for permission to protect each other."</p>
+      — Red Signal
+    </blockquote>
+  </section>
+
+  <section class="section">
+    <div class="section-label">Right now</div>
+    <div class="alert-card" id="activeAlertCard">
+      <div class="status-row"><span class="status-dot"></span> Live case feed</div>
+      <p class="empty">No active alerts are loaded yet — once connected, urgent cases near you will appear here first.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">What you can do</div>
+    <div class="action-grid">
+      <button class="action-card" onclick="showCases()">
+        <span class="icon" aria-hidden="true">🔎</span>
+        <h3>See cases</h3>
+        <p>Browse missing and found reports shared with the public.</p>
+      </button>
+      <button class="action-card" onclick="showReportCase()">
+        <span class="icon" aria-hidden="true">📋</span>
+        <h3>Report a loved one</h3>
+        <p>Start a case file. You control who can see it.</p>
+      </button>
+      <button class="action-card" onclick="showTipForm()">
+        <span class="icon" aria-hidden="true">🕯️</span>
+        <h3>Share what you know</h3>
+        <p>Send a tip. You can stay anonymous — that choice is yours.</p>
+      </button>
+      <button class="action-card" onclick="showSafetySetup()">
+        <span class="icon" aria-hidden="true">🛡️</span>
+        <h3>Set up your safety profile</h3>
+        <p>Add trusted contacts and preferences now, so you don't have to in a crisis.</p>
+      </button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="div-line"></div>
+    Red Signal is built to be free for the people who need it, always.<br>
+    If you are in immediate danger and able to call for help, please do.
+  </footer>
+
+</main>
+
+<div class="panic-dock">
+  <button class="panic-btn" id="panicBtn">
+    <span class="ring" aria-hidden="true"></span>
+    Panic — Get Help Now
+  </button>
+</div>
+
+<!-- Panic confirm / countdown modal -->
+<div class="modal-backdrop" id="modal-panic">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="panicTitle">
+    <svg class="modal-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <polygon points="50,4 78,18 90,46 78,74 50,88 22,74 10,46 22,18" fill="none" stroke="#E8C88A" stroke-width="4"/>
+      <path d="M50 26c-8 0-13 6-13 13v8l-9 9c-2 2-1 5 2 5h40c3 0 4-3 2-5l-9-9v-8c0-7-5-13-13-13z" fill="#C0392B"/>
+      <circle cx="50" cy="66" r="5" fill="#C0392B"/>
+    </svg>
+    <h2 id="panicTitle">Sending your alert in</h2>
+    <div class="countdown-num" id="countdownNum">15</div>
+    <p>Your trusted contacts will be notified if you don't check in. Tap "I'm safe" any time to cancel.</p>
+    <div class="modal-actions">
+      <button class="btn-solid" onclick="confirmSafe()">I'm safe — cancel this</button>
+      <button class="btn-ghost" onclick="sendNow()">Send now, don't wait</button>
+    </div>
+  </div>
+</div>
+
+<!-- Account setup modal -->
+<div class="modal-backdrop" id="modal-account">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <h2 id="acctTitle">Your account</h2>
+    <div id="acctSignedOut">
+      <p>You need an account to set up contacts and use the panic button. This takes a few seconds and nothing about you is required except a name contacts will recognize.</p>
+      <div class="form-error" id="acctError"></div>
+      <div class="field">
+        <label for="acctName">Your name (shown to your contacts)</label>
+        <input type="text" id="acctName" placeholder="e.g. Jamie Little Eagle">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-solid" onclick="registerAccount()">Create my account</button>
+        <button class="btn-ghost" onclick="showRestoreKey()">I already have a key</button>
+        <button class="btn-ghost" onclick="closeModal('modal-account')">Cancel</button>
+      </div>
+    </div>
+    <div id="acctRestoreKey" style="display:none;">
+      <p>Paste the API key you saved when you first registered.</p>
+      <div class="field">
+        <label for="restoreKeyInput">API key</label>
+        <input type="text" id="restoreKeyInput" placeholder="Paste your key here">
+      </div>
+      <div class="form-error" id="restoreError"></div>
+      <div class="modal-actions">
+        <button class="btn-solid" onclick="restoreAccount()">Use this key</button>
+        <button class="btn-ghost" onclick="showRegisterForm()">Back</button>
+      </div>
+    </div>
+    <div id="acctSignedIn" style="display:none;">
+      <p>Signed in as <strong id="acctDisplayName"></strong>.</p>
+      <div class="key-display" id="acctKeyShown"></div>
+      <p class="hint" style="margin-top:0;">This key is saved in this browser. If you clear your browser data or switch devices, you'll need it again — copy it somewhere safe now.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="signOut()">Sign out of this device</button>
+        <button class="btn-solid" onclick="closeModal('modal-account')">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Safety profile setup modal -->
+<div class="modal-backdrop" id="modal-safety">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="safetyTitle">
+    <h2 id="safetyTitle">Your safety profile</h2>
+    <p>Set this up now, while things are calm, so the panic button doesn't need any typing later.</p>
+    <div class="form-error" id="safetyError"></div>
+    <div class="form-success" id="safetySuccess"></div>
+
+    <div class="section-label" style="margin-top:20px;">About you</div>
+    <div class="field">
+      <label for="sfName">Full name</label>
+      <input type="text" id="sfName">
+    </div>
+    <div class="field">
+      <label for="sfDescription">Description (for anyone looking for you)</label>
+      <textarea id="sfDescription" placeholder="Height, hair, what you might be wearing..."></textarea>
+    </div>
+    <div class="field">
+      <label for="sfVehicle">Vehicle</label>
+      <input type="text" id="sfVehicle" placeholder="e.g. Blue Honda Civic, plate ABC123">
+    </div>
+    <div class="field">
+      <label for="sfEmergencyNote">Anything else your contacts should know</label>
+      <textarea id="sfEmergencyNote"></textarea>
+    </div>
+
+    <div class="section-label" style="margin-top:20px;">If you trigger the panic button</div>
+    <div class="checkbox-field">
+      <input type="checkbox" id="sfTracking">
+      <label for="sfTracking">Start a location trail automatically, and give me time to check in before contacts are notified</label>
+    </div>
+    <div class="field">
+      <label for="sfCheckinWindow">Check-in window (seconds before contacts are notified)</label>
+      <input type="number" id="sfCheckinWindow" min="15" max="1800" value="90">
+    </div>
+    <div class="field">
+      <label for="sfRetention">Keep location trails for (days) before automatic deletion</label>
+      <input type="number" id="sfRetention" min="1" max="365" value="30">
+    </div>
+
+    <div class="section-label" style="margin-top:20px;">Trusted contacts</div>
+    <div class="contact-list" id="contactList"></div>
+    <div class="field-row">
+      <div class="field">
+        <label for="ctLabel">Label</label>
+        <input type="text" id="ctLabel" placeholder="e.g. Sister">
+      </div>
+      <div class="field">
+        <label for="ctType">Type</label>
+        <select id="ctType">
+          <option value="email">Email</option>
+          <option value="sms">SMS</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="ctDestination">Email or phone number</label>
+      <input type="text" id="ctDestination">
+    </div>
+    <div class="checkbox-field">
+      <input type="checkbox" id="ctIsLe">
+      <label for="ctIsLe">This is a law enforcement / tribal police contact</label>
+    </div>
+    <p class="hint">Law enforcement contacts are only notified if you specifically choose to include them at the moment you trigger panic — never automatically.</p>
+    <button class="btn-ghost" style="margin-bottom:16px;" onclick="addContact()">+ Add this contact</button>
+
+    <div class="modal-actions">
+      <button class="btn-solid" onclick="saveSafetyProfile()">Save my safety profile</button>
+      <button class="btn-ghost" onclick="closeModal('modal-safety')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cases browser modal -->
+<div class="modal-backdrop" id="modal-cases">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="casesTitle">
+    <h2 id="casesTitle">Public cases</h2>
+    <div class="modal-scroll-body" id="casesList">
+      <p class="hint">Loading...</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-cases')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report a case modal -->
+<div class="modal-backdrop" id="modal-report">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+    <h2 id="reportTitle">Report a loved one</h2>
+    <div class="form-error" id="reportError"></div>
+    <div class="form-success" id="reportSuccess"></div>
+    <p class="hint" style="margin-top:0;">You need an account first — this links the case to you so you can manage it.</p>
+    <div class="field">
+      <label for="rcName">Name</label>
+      <input type="text" id="rcName">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="rcStatus">Status</label>
+        <select id="rcStatus">
+          <option value="missing">Missing</option>
+          <option value="found">Found</option>
+          <option value="homicide">Homicide</option>
+          <option value="unsolved">Unsolved</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="rcLastSeenDate">Last seen date</label>
+        <input type="text" id="rcLastSeenDate" placeholder="YYYY-MM-DD">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="rcCity">Last seen city</label>
+        <input type="text" id="rcCity">
+      </div>
+      <div class="field">
+        <label for="rcState">Last seen state</label>
+        <input type="text" id="rcState">
+      </div>
+    </div>
+    <div class="field">
+      <label for="rcTribe">Tribal affiliation (optional)</label>
+      <input type="text" id="rcTribe">
+    </div>
+    <p class="hint" style="margin-top:0;">New cases start visible only to you and people you approve, until a moderator reviews and publishes them more widely.</p>
+    <div class="modal-actions">
+      <button class="btn-solid" onclick="submitCase()">Submit case</button>
+      <button class="btn-ghost" onclick="closeModal('modal-report')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tip modal -->
+<div class="modal-backdrop" id="modal-tip">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tipTitle">
+    <h2 id="tipTitle">Share what you know</h2>
+    <div class="form-error" id="tipError"></div>
+    <div class="form-success" id="tipSuccess"></div>
+    <div class="field">
+      <label for="tipCaseId">Case ID (optional — leave blank for a general tip)</label>
+      <input type="text" id="tipCaseId">
+    </div>
+    <div class="field">
+      <label for="tipMessage">What do you know?</label>
+      <textarea id="tipMessage" placeholder="Share anything you think could help — a sighting, a detail, anything."></textarea>
+    </div>
+    <div class="checkbox-field">
+      <input type="checkbox" id="tipNamed">
+      <label for="tipNamed">I'm willing to be identified if needed</label>
+    </div>
+    <div class="field" id="tipContactField" style="display:none;">
+      <label for="tipContact">Your contact info</label>
+      <input type="text" id="tipContact">
+    </div>
+    <p class="hint">You do not need an account to send a tip, and you can stay anonymous.</p>
+    <div class="modal-actions">
+      <button class="btn-solid" onclick="submitTip()">Send tip</button>
+      <button class="btn-ghost" onclick="closeModal('modal-tip')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============ API base ============
+  // Same-origin, since the frontend is served by the same FastAPI app.
+  const API = '';
+
+  function apiHeaders(extra){
+    const h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+    const key = getApiKey();
+    if (key) h['X-API-Key'] = key;
+    return h;
+  }
+
+  async function apiFetch(path, options){
+    options = options || {};
+    options.headers = apiHeaders(options.headers);
+    const res = await fetch(API + path, options);
+    let data = null;
+    try { data = await res.json(); } catch(e) { /* no body */ }
+    if (!res.ok) {
+      const detail = (data && data.detail) ? data.detail : ('Request failed (' + res.status + ')');
+      const err = new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  // ============ Account / key storage ============
+  const KEY_STORAGE = 'mmiw_api_key';
+  const NAME_STORAGE = 'mmiw_display_name';
+
+  function getApiKey(){ return localStorage.getItem(KEY_STORAGE); }
+  function getDisplayName(){ return localStorage.getItem(NAME_STORAGE) || 'you'; }
+  function setAccount(key, name){
+    localStorage.setItem(KEY_STORAGE, key);
+    if (name) localStorage.setItem(NAME_STORAGE, name);
+    refreshAccountUI();
+  }
+  function clearAccount(){
+    localStorage.removeItem(KEY_STORAGE);
+    localStorage.removeItem(NAME_STORAGE);
+    refreshAccountUI();
+  }
+  function isSignedIn(){ return !!getApiKey(); }
+
+  function refreshAccountUI(){
+    const pill = document.getElementById('accountPill');
+    const label = document.getElementById('accountLabel');
+    if (isSignedIn()){
+      pill.dataset.signedIn = 'true';
+      label.textContent = getDisplayName();
+    } else {
+      pill.dataset.signedIn = 'false';
+      label.textContent = 'Set up account';
+    }
+  }
+
+  document.getElementById('accountPill').addEventListener('click', () => {
+    if (isSignedIn()){
+      document.getElementById('acctSignedOut').style.display = 'none';
+      document.getElementById('acctRestoreKey').style.display = 'none';
+      document.getElementById('acctSignedIn').style.display = 'block';
+      document.getElementById('acctDisplayName').textContent = getDisplayName();
+      document.getElementById('acctKeyShown').textContent = getApiKey();
+    } else {
+      showRegisterForm();
+    }
+    openModal('modal-account');
+  });
+
+  function showRegisterForm(){
+    document.getElementById('acctSignedOut').style.display = 'block';
+    document.getElementById('acctRestoreKey').style.display = 'none';
+    document.getElementById('acctSignedIn').style.display = 'none';
+    hideError('acctError');
+  }
+  function showRestoreKey(){
+    document.getElementById('acctSignedOut').style.display = 'none';
+    document.getElementById('acctRestoreKey').style.display = 'block';
+    hideError('restoreError');
+  }
+  async function registerAccount(){
+    hideError('acctError');
+    const name = document.getElementById('acctName').value.trim();
+    if (!name){ showError('acctError', 'Please enter a name.'); return; }
+    try{
+      const result = await apiFetch('/users', {
+        method:'POST',
+        body: JSON.stringify({ display_name: name })
+      });
+      setAccount(result.api_key, name);
+      document.getElementById('acctSignedOut').style.display = 'none';
+      document.getElementById('acctSignedIn').style.display = 'block';
+      document.getElementById('acctDisplayName').textContent = name;
+      document.getElementById('acctKeyShown').textContent = result.api_key;
+    } catch(e){
+      showError('acctError', e.message);
+    }
+  }
+
+  async function restoreAccount(){
+    hideError('restoreError');
+    const key = document.getElementById('restoreKeyInput').value.trim();
+    if (!key){ showError('restoreError', 'Please paste your key.'); return; }
+    localStorage.setItem(KEY_STORAGE, key);
+    try{
+      await apiFetch('/contacts');
+      setAccount(key, getDisplayName());
+      document.getElementById('acctRestoreKey').style.display = 'none';
+      document.getElementById('acctSignedIn').style.display = 'block';
+      document.getElementById('acctDisplayName').textContent = getDisplayName();
+      document.getElementById('acctKeyShown').textContent = key;
+    } catch(e){
+      localStorage.removeItem(KEY_STORAGE);
+      showError('restoreError', 'That key was not accepted. Double check it and try again.');
+    }
+  }
+
+  function signOut(){
+    clearAccount();
+    closeModal('modal-account');
+  }
+
+  // ============ Shared UI helpers ============
+  function showError(id, msg){
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideError(id){
+    const el = document.getElementById(id);
+    el.classList.remove('show');
+    el.textContent = '';
+  }
+  function showSuccess(id, msg){
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideSuccess(id){
+    const el = document.getElementById(id);
+    el.classList.remove('show');
+  }
+
+  function requireSignIn(){
+    if (!isSignedIn()){
+      document.getElementById('accountPill').click();
+      return false;
+    }
+    return true;
+  }
+
+  // ============ Elder mode ============
+  const elderToggle = document.getElementById('elderToggle');
+  const elderLabel = document.getElementById('elderLabel');
+  function setElder(on){
+    document.body.classList.toggle('elder', !!on);
+    elderToggle.dataset.on = on ? "true" : "false";
+    elderToggle.setAttribute('aria-pressed', on ? "true" : "false");
+    elderLabel.textContent = on ? "Larger text: on" : "Larger text";
+  }
+  setElder(false);
+  elderToggle.addEventListener('click', () => setElder(elderToggle.dataset.on !== "true"));
+
+  // ============ Modals ============
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+  // ============ Safety profile + contacts ============
+  let localContacts = [];
+
+  async function showSafetySetup(){
+    if (!requireSignIn()) return;
+    hideError('safetyError'); hideSuccess('safetySuccess');
+    try{
+      const profile = await apiFetch('/safety-profile');
+      document.getElementById('sfName').value = profile.full_name || '';
+      document.getElementById('sfDescription').value = profile.description || '';
+      document.getElementById('sfVehicle').value = profile.vehicle || '';
+      document.getElementById('sfEmergencyNote').value = profile.emergency_note || '';
+      document.getElementById('sfTracking').checked = !!profile.tracking_enabled;
+      document.getElementById('sfCheckinWindow').value = profile.checkin_window_sec || 90;
+      document.getElementById('sfRetention').value = profile.location_retention_days || 30;
+    } catch(e){
+      // No profile yet is expected for a new account — leave fields at defaults.
+    }
+    await loadContacts();
+    openModal('modal-safety');
+  }
+
+  async function loadContacts(){
+    try{
+      const contacts = await apiFetch('/contacts');
+      renderContacts(contacts);
+    } catch(e){
+      renderContacts([]);
+    }
+  }
+
+  function renderContacts(contacts){
+    const list = document.getElementById('contactList');
+    if (!contacts.length){
+      list.innerHTML = '<p class="hint" style="margin:0 0 12px;">No contacts added yet.</p>';
+      return;
+    }
+    list.innerHTML = contacts.map(c => `
+      <div class="contact-row">
+        <div>
+          <strong>${escapeHtml(c.label)}</strong>
+          <div class="meta">${escapeHtml(c.contact_type)} · ${escapeHtml(c.destination)}${c.is_le ? ' · law enforcement' : ''}</div>
+        </div>
+        <button onclick="deleteContact('${c.id}')">Remove</button>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(s){
+    const div = document.createElement('div');
+    div.textContent = s == null ? '' : String(s);
+    return div.innerHTML;
+  }
+
+  async function addContact(){
+    hideError('safetyError');
+    const label = document.getElementById('ctLabel').value.trim();
+    const contact_type = document.getElementById('ctType').value;
+    const destination = document.getElementById('ctDestination').value.trim();
+    const is_le = document.getElementById('ctIsLe').checked;
+    if (!label || !destination){
+      showError('safetyError', 'Please fill in a label and contact info before adding.');
+      return;
+    }
+    try{
+      await apiFetch('/contacts', {
+        method:'POST',
+        body: JSON.stringify({ label, contact_type, destination, is_le, priority: 1 })
+      });
+      document.getElementById('ctLabel').value = '';
+      document.getElementById('ctDestination').value = '';
+      document.getElementById('ctIsLe').checked = false;
+      await loadContacts();
+    } catch(e){
+      showError('safetyError', e.message);
+    }
+  }
+
+  async function deleteContact(id){
+    try{
+      await apiFetch('/contacts/' + id, { method:'DELETE' });
+      await loadContacts();
+    } catch(e){
+      showError('safetyError', e.message);
+    }
+  }
+
+  async function saveSafetyProfile(){
+    hideError('safetyError'); hideSuccess('safetySuccess');
+    const body = {
+      full_name: document.getElementById('sfName').value.trim() || null,
+      description: document.getElementById('sfDescription').value.trim() || null,
+      vehicle: document.getElementById('sfVehicle').value.trim() || null,
+      emergency_note: document.getElementById('sfEmergencyNote').value.trim() || null,
+      tracking_enabled: document.getElementById('sfTracking').checked,
+      checkin_window_sec: parseInt(document.getElementById('sfCheckinWindow').value, 10) || 90,
+      location_retention_days: parseInt(document.getElementById('sfRetention').value, 10) || 30,
+      auto_delete_if_no_case: true
+    };
+    try{
+      await apiFetch('/safety-profile', { method:'PUT', body: JSON.stringify(body) });
+      showSuccess('safetySuccess', 'Safety profile saved.');
+    } catch(e){
+      showError('safetyError', e.message);
+    }
+  }
+
+  // ============ Cases ============
+  async function showCases(){
+    openModal('modal-cases');
+    const list = document.getElementById('casesList');
+    list.innerHTML = '<p class="hint">Loading...</p>';
+    try{
+      const cases = await apiFetch('/cases');
+      if (!cases.length){
+        list.innerHTML = '<p class="hint">No public cases yet.</p>';
+        return;
+      }
+      list.innerHTML = cases.map(c => `
+        <div class="case-item">
+          <h4>${escapeHtml(c.name)}</h4>
+          <p>Status: ${escapeHtml(c.status)}</p>
+          <p>${escapeHtml(c.last_seen_city || '')}${c.last_seen_state ? ', ' + escapeHtml(c.last_seen_state) : ''}${c.last_seen_date ? ' — ' + escapeHtml(c.last_seen_date) : ''}</p>
+        </div>
+      `).join('');
+    } catch(e){
+      list.innerHTML = '<p class="hint">Could not load cases right now.</p>';
+    }
+  }
+
+  function showReportCase(){
+    if (!requireSignIn()) return;
+    hideError('reportError'); hideSuccess('reportSuccess');
+    openModal('modal-report');
+  }
+
+  async function submitCase(){
+    hideError('reportError'); hideSuccess('reportSuccess');
+    const name = document.getElementById('rcName').value.trim();
+    if (!name){ showError('reportError', 'Please enter a name.'); return; }
+    const body = {
+      status: document.getElementById('rcStatus').value,
+      name: name,
+      last_seen_date: document.getElementById('rcLastSeenDate').value.trim() || null,
+      last_seen_city: document.getElementById('rcCity').value.trim() || null,
+      last_seen_state: document.getElementById('rcState').value.trim() || null,
+      tribal_affiliation: document.getElementById('rcTribe').value.trim() || null,
+      public_level: 'public',
+      family_consent: true
+    };
+    try{
+      await apiFetch('/cases', { method:'POST', body: JSON.stringify(body) });
+      showSuccess('reportSuccess', 'Case submitted. It will be reviewed before appearing publicly.');
+      document.getElementById('rcName').value = '';
+      document.getElementById('rcLastSeenDate').value = '';
+      document.getElementById('rcCity').value = '';
+      document.getElementById('rcState').value = '';
+      document.getElementById('rcTribe').value = '';
+    } catch(e){
+      showError('reportError', e.message);
+    }
+  }
+
+  // ============ Tips ============
+  document.getElementById('tipNamed').addEventListener('change', (e) => {
+    document.getElementById('tipContactField').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  function showTipForm(){
+    hideError('tipError'); hideSuccess('tipSuccess');
+    openModal('modal-tip');
+  }
+
+  async function submitTip(){
+    hideError('tipError'); hideSuccess('tipSuccess');
+    const message = document.getElementById('tipMessage').value.trim();
+    if (message.length < 3){ showError('tipError', 'Please share a bit more detail.'); return; }
+    const form = new FormData();
+    form.append('message', message);
+    const caseId = document.getElementById('tipCaseId').value.trim();
+    if (caseId) form.append('case_id', caseId);
+    form.append('named', document.getElementById('tipNamed').checked ? 'true' : 'false');
+    const contact = document.getElementById('tipContact').value.trim();
+    if (contact) form.append('contact', contact);
+    try{
+      const res = await fetch('/tips', { method:'POST', body: form });
+      if (!res.ok){ throw new Error('Could not send tip (' + res.status + ')'); }
+      showSuccess('tipSuccess', 'Tip received. Thank you.');
+      document.getElementById('tipMessage').value = '';
+      document.getElementById('tipCaseId').value = '';
+    } catch(e){
+      showError('tipError', e.message);
+    }
+  }
+
+  // ============ Panic flow ============
+  const panicBtn = document.getElementById('panicBtn');
+  const panicModal = document.getElementById('modal-panic');
+  const countdownEl = document.getElementById('countdownNum');
+  let countdownTimer = null;
+  let locationTimer = null;
+  let currentPanicId = null;
+  let secondsLeft = 90;
+
+  panicBtn.addEventListener('click', async () => {
+    if (!requireSignIn()) return;
+
+    let coords = {};
+    try{
+      const pos = await getPosition();
+      coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    } catch(e){ /* location optional — proceed without it if denied/unavailable */ }
+
+    try{
+      const result = await apiFetch('/panic/trigger', {
+        method: 'POST',
+        body: JSON.stringify(Object.assign({ note: '', include_le: false }, coords))
+      });
+      currentPanicId = result.panic_event_id;
+
+      if (result.status === 'pending'){
+        secondsLeft = Math.max(1, result.checkin_deadline - Math.floor(Date.now()/1000));
+        countdownEl.textContent = secondsLeft;
+        panicModal.classList.add('open');
+        clearInterval(countdownTimer);
+        countdownTimer = setInterval(() => {
+          secondsLeft -= 1;
+          countdownEl.textContent = Math.max(secondsLeft, 0);
+          if (secondsLeft <= 0){ clearInterval(countdownTimer); onCountdownExpired(); }
+        }, 1000);
+
+        if (result.tracking_active){
+          startLocationPings();
+        }
+      } else {
+        showPanicSentConfirmation();
+      }
+    } catch(e){
+      alert('Could not send your alert: ' + e.message);
+    }
+  });
+
+  function getPosition(){
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation){ reject(new Error('no geolocation')); return; }
+      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000 });
+    });
+  }
+
+  function startLocationPings(){
+    clearInterval(locationTimer);
+    locationTimer = setInterval(async () => {
+      if (!currentPanicId) { clearInterval(locationTimer); return; }
+      try{
+        const pos = await getPosition();
+        await apiFetch('/panic/location', {
+          method: 'POST',
+          body: JSON.stringify({
+            panic_event_id: currentPanicId,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy_m: pos.coords.accuracy
+          })
+        });
+      } catch(e){ /* a missed ping is fine — the next one will try again */ }
+    }, 20000);
+  }
+
+  async function confirmSafe(){
+    clearInterval(countdownTimer);
+    clearInterval(locationTimer);
+    panicModal.classList.remove('open');
+    if (currentPanicId){
+      try{
+        await apiFetch('/panic/checkin', {
+          method: 'POST',
+          body: JSON.stringify({ panic_event_id: currentPanicId })
+        });
+      } catch(e){ /* best effort */ }
+    }
+    currentPanicId = null;
+  }
+
+  async function sendNow(){
+    clearInterval(countdownTimer);
+    await onCountdownExpired();
+  }
+
+  async function onCountdownExpired(){
+    clearInterval(locationTimer);
+    panicModal.classList.remove('open');
+    showPanicSentConfirmation();
+    currentPanicId = null;
+  }
+
+  function showPanicSentConfirmation(){
+    alert('Your alert has been sent to your trusted contacts.');
+  }
+
+  // ============ Init ============
+  refreshAccountUI();
+</script>
+
+</body>
+</html>
