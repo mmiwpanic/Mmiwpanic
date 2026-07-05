@@ -41,6 +41,10 @@ def send_email(to_address: str, subject: str, body: str) -> DeliveryResult:
             headers={
                 "Authorization": f"Bearer {settings.resend_api_key}",
                 "Content-Type": "application/json",
+                # Cloudflare (which fronts Resend's API) blocks requests with
+                # no User-Agent or a bot-like one (Cloudflare error 1010).
+                # A normal-looking UA avoids that false-positive block.
+                "User-Agent": "MMIW-Panic/1.0 (+https://mmiw-panic.onrender.com)",
             },
             method="POST",
         )
@@ -80,3 +84,4 @@ def dispatch(contact: dict, subject: str, body: str) -> DeliveryResult:
     if ctype == "sms":
         return send_sms(dest, body)
     return DeliveryResult(False, f"unknown_contact_type:{ctype}")
+
