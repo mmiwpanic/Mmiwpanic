@@ -1,6 +1,7 @@
 from __future__ import annotations
-import smtplib
-from email.message import EmailMessage
+import json
+import urllib.request
+import urllib.error
 from .settings import settings
 
 
@@ -11,19 +12,47 @@ class DeliveryResult:
 
 
 def send_email(to_address: str, subject: str, body: str) -> DeliveryResult:
-    if not (settings.smtp_user and settings.smtp_pass and settings.smtp_host):
+    """Sends email via Resend's HTTPS API instead of raw SMTP.
+
+    This exists because most free-tier hosting platforms (Render, Railway,
+    and others) block outbound SMTP (ports 25/465/587) to prevent spam abuse
+    — this is a documented, deliberate infrastructure policy, not something
+    specific to this app. Resend sends over plain HTTPS, which isn't
+    blocked, and has a genuinely permanent free tier (3,000 emails/month).
+
+    settings.resend_from_address defaults to Resend's own shared test
+    domain (onboarding@resend.dev), which requires no setup — real
+    deployments should eventually verify their own sending domain with
+    Resend for better deliverability, but this works correctly as-is.
+    """
+    if not settings.resend_api_key:
         return DeliveryResult(False, "email_not_configured")
     try:
-        msg = EmailMessage()
-        msg["From"] = settings.smtp_user
-        msg["To"] = to_address
-        msg["Subject"] = subject
-        msg.set_content(body)
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as s:
-            s.starttls()
-            s.login(settings.smtp_user, settings.smtp_pass)
-            s.send_message(msg)
+        payload = json.dumps({
+            "from": settings.resend_from_address,
+            "to": [to_address],
+            "subject": subject,
+            "text": body,
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {settings.resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            resp.read()
         return DeliveryResult(True)
+    except urllib.error.HTTPError as e:
+        try:
+            detail = e.read().decode("utf-8")
+        except Exception:
+            detail = str(e)
+        return DeliveryResult(False, f"resend_http_error_{e.code}: {detail}")
     except Exception as e:
         return DeliveryResult(False, str(e))
 
