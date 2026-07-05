@@ -1,8 +1,15 @@
+
 import os, json
 class Settings:
     def __init__(self) -> None:
         self.debug = os.getenv("DEBUG", "0") == "1"
         self.panic_redirect = os.getenv("PANIC_REDIRECT", "https://www.weather.com")
+        # Resend (HTTPS email API — used instead of SMTP because most free-tier
+        # hosts block outbound SMTP ports to prevent spam abuse).
+        self.resend_api_key = os.getenv("RESEND_API_KEY")
+        self.resend_from_address = os.getenv("RESEND_FROM_ADDRESS", "onboarding@resend.dev")
+        # Old SMTP settings kept for reference/backward compatibility but no
+        # longer used by notify.py.
         self.smtp_host = os.getenv("SMTP_HOST", "smtp.office365.com")
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
         self.smtp_user = os.getenv("SMTP_USER")
